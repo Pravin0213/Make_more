@@ -29,14 +29,34 @@ for name in names:
 
 P = N.float() / N.float().sum(1, keepdim=True) # Normalize the rows to get probabilities
 
-g = torch.Generator().manual_seed(2147483647) # This is the seed for the random number generator
 
 for i in range(10): # This will print 10 samples
     out = []
     ix = 0 # Start with the first character
     while True:
-        ix = torch.multinomial(P[ix], num_samples=1, replacement=True, generator=g).item() # Sample the next character index
+        ix = torch.multinomial(P[ix], num_samples=1, replacement=True).item() # Sample the next character index
         out.append(index_to_str[ix])
         if ix == 0: # If we hit the end character, break the loop
             break
     print(''.join(out))
+
+
+log_likelihood = 0.0
+n = 0
+for name in names[:3]: 
+    chs = ['.'] + list(name) + ['.'] # We do this to add <S> to first token and <E> to last token as to make a pair in starting and ending of the name
+    for char1, char2 in zip(chs, chs[1:]):
+        i1 = str_to_index[char1]
+        i2 = str_to_index[char2]
+        prob = P[i1, i2]
+        logprob = torch.log(prob)
+        log_likelihood += logprob
+        n += 1
+        print(f'{char1}{char2}: {prob:.4f} {logprob:.4f}') # Print the probability and log probability of each bigram
+print(f'Log likelihood: {log_likelihood:.4f}') 
+null = -log_likelihood
+print(f'Null: {null/n}') # Print the null value
+
+
+# creating a training set of bigrams
+
